@@ -1,0 +1,27 @@
+version: '2.1'
+
+services:
+  partner:
+    image: "repo-04.dodi.io:5000/partner:0.0.1-SNAPSHOT"
+    container_name: partner
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      #SPRING_PROFILES_ACTIVE: ${CONFIG_SPRING_PROFILES_ACTIVE}
+      PORT_KAFKA_PRODUCER: 9092
+      CONFIG_SERVER_ENDPOINT: http://configserver:8888
+
+    #depends_on:      
+    #  - configserver
+     # - mongodb
+    #links:
+    #  - mongodb
+    #  - kafka
+    #  - configserver
+    networks:
+      - docomo.fraudwall
+    ports:
+      - "9090:9090"
+
+networks:
+  docomo.fraudwall:
+    driver: bridge

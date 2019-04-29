@@ -1,0 +1,212 @@
+def source = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
+
+def scopeMap  = [
+        "buildGoal"   : "deploy",
+        "profile" : "preprod",
+        "deployGoal" :"install",
+        "rev"    : source,
+	"deploy" : "false"
+]
+
+switch (source) {
+    case "master":
+        scopeMap.put("profile", "preprod")
+        scopeMap.put("version", "master-SNAPSHOT")
+		scopeMap.put("deploy", "true")
+        break
+    case ~/\d*\.\d*\.\d*/:
+        scopeMap.put("profile", "preprod")
+        scopeMap.put("version", "$source")
+		scopeMap.put("deploy", "true")
+        break
+    case ~/feature\/.*/:
+        scopeMap.put("profile", "preprod")
+        def array = source.toString().split('/')
+        if (array.length > 1) {
+            scopeMap.put("version", "${array[1]}-SNAPSHOT")
+        }
+
+        break
+    case ~/hotfix\/.*/:
+        scopeMap.put("profile", "preprod")
+        def array = source.toString().split('/')
+        if (array.length > 1) {
+            scopeMap.put("version", "${array[1]}-SNAPSHOT")
+        }
+        break
+    case ~/bugfix\/.*/:
+        scopeMap.put("profile", "preprod")
+        def array = source.toString().split('/')
+        if (array.length > 1) {
+            scopeMap.put("version", "${array[1]}-SNAPSHOT")
+        }
+        break
+    default:
+        echo "Nothing to do"
+}
+
+import com.buongiorno.jenkinsci.plugins.delivery.*;
+
+currentBuild.displayName = "#${currentBuild.number}: "+ scopeMap.get('buildGoal')+"&"+scopeMap.get('deployGoal')+" - "+scopeMap.get('profile')+" - "+ scopeMap.get('rev')
+
+pipeline {
+    agent any
+    tools {
+        maven 'Maven 3.5.0'
+        jdk 'jdk 8u71'     
+        oc 'oc3'       
+    }
+        
+    environment{
+
+		DOCKER_REPOSITORY= "aherreros/microservicesdocomo"
+		DOCKER_USER="alfonso.herreros"
+		DOCKER_PASS="pepito"
+
+		OPENSHIFT_PROJECT = "prueba"
+		OPENSHIFT_TOKEN="1GBRtUh37CLj2uWCSoyGKV3YQM-3os7ZZOvbsIjheMc"
+		OPENSHIFT_ENPOINT="https://okd-milrc1.dodi.io:8443"
+		
+        // ****************************** Modify the job names for different projects ********************     
+        buildJob = "/FraudWall/fraudwall-api_arq"        
+        //deployJob = "/Data-Intelligence/data-intelligence-genius-cat-flume-deploy"
+        // ****************************** Modify the job names for different projects ********************
+
+        myBuildGoal = scopeMap.get("buildGoal")
+
+        
+  
+        myProfile = scopeMap.get("profile")
+    
+    
+        myRev = scopeMap.get("rev")        
+
+        
+        myVersion = scopeMap.get("version")
+
+        
+		shouldDeploy = scopeMap.get("deploy")
+
+    }
+
+
+
+
+    options {
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '3', artifactNumToKeepStr: '3'))
+    }
+
+
+
+
+    stages {
+
+        stage('Docker clean') {
+            steps {
+                echo 'Docker artifact....'
+               // sh 'docker rmi $(docker images -q -f "dangling=true")'
+                sh 'docker images'
+            }
+        }   
+      
+        stage('Prepare') {
+            steps {
+                echo 'levantando consumers....'
+                sh 'docker-compose -f ./ci/local/docker-compose-consumer.yml up -d'
+                
+            }
+        }           
+       
+        
+       stage('Build') {
+            steps {
+                echo 'Building artifact....'
+                echo "Goal: $env.myBuildGoal and $env.myDeployGoal Revision $env.myRev Version: $env.myVersion"
+                sh 'mvn -B -DskipTests -Ddockerfile.skip=true clean package'
+            }
+        }
+
+        stage('Install') {
+            steps {
+                echo 'Install artifact....'
+                echo "Goal: $env.myBuildGoal and $env.myDeployGoal Revision $env.myRev Version: $env.myVersion"
+                sh 'mvn -B clean install -DskipTests'                 
+            }
+        }
+        
+        
+        stage('Bring up consumer') {
+            steps {
+                echo 'Bring up consumers....'
+ 				sh 'docker-compose -f ./ci/local/docker-compose.yml up -d'
+                
+            }
+        }   
+                
+        stage('Test') {
+            steps {
+                echo 'Install artifact....'
+                echo "Goal: $env.myBuildGoal and $env.myDeployGoal Revision $env.myRev Version: $env.myVersion"
+                sh 'mvn -B clean install -Ddockerfile.skip=true'                 
+            }
+        }               
+        //stage('Deploy') {
+        //    steps {
+        //        echo 'Deloying artifact....'
+        //        echo "Goal: $env.myBuildGoal and $env.myDeployGoal Revision $env.myRev Version: $env.myVersion"
+        //        sh 'mvn deploy  -DskipTests -Ddockerfile.skip=true'                 
+        //    }
+        //}          
+
+        stage('Deploy') {
+            steps {
+            	sh "docker images"
+            	
+                echo 'Deloying artifact....'
+                echo "Goal: $env.myBuildGoal and $env.myDeployGoal Revision $env.myRev Version: $env.myVersion"
+//		        sh 'mvn deploy -DskipTests -Ddockerfile.username=$DOCKER_USER -Ddockerfile.password=$DOCKER_PASS'                 
+                
+            }                        
+        }                  
+
+        stage('Deploy Openshift') {
+            steps {                           
+                //echo "oc import-image configserver:configserver-$env.myVersion --from $DOCKER_REPOSITORY:configserver-$env.myVersion"                
+                echo 'Deloying in openshift....'
+                 
+                sh "oc login ${OPENSHIFT_ENPOINT} --token=${OPENSHIFT_TOKEN}"                
+                sh "oc project $OPENSHIFT_PROJECT"                                
+                sh "oc new-app aherreros/microservicesdocomo:partner-0.0.1-SNAPSHOT --name partner"
+                           
+                
+//                echo "oc import-image configserver:configserver-$env.myVersion --from $DOCKER_REPOSITORY:configserver-$env.myVersion"                
+//                sh 'mvn deploy -DskipTests -Ddockerfile.username=$DOCKER_USER -Ddockerfile.password=$DOCKER_PASS'                 
+                //sh 'mvn deploy -DskipTests'                
+            }                        
+        }     
+                                     
+        stage('configuration environment Openshift') {
+            steps {
+
+           	sh "oc set env dc/partner CONFIG_SERVER_ENDPOINT=http://configserver:8080" 
+			sh "oc set env dc/partner SPRING_PROFILES_ACTIVE=openshift"
+			sh "oc expose svc/tracking" 
+                 
+            }          
+        }  
+                
+    }
+    post {
+        always {
+            script {           
+                echo 'stoping consumers....'
+                sh 'docker-compose -f ./ci/local/docker-compose.yml down'
+ 				echo 'stoping producers....'
+ 				sh 'docker-compose -f ./ci/local/docker-compose-consumer.yml down'   
+ 				
+                currentBuild.result = currentBuild.result ?: 'SUCCESS'
+            }
+        }
+    }
+}

@@ -1,0 +1,177 @@
+swagger: '2.0'
+info:
+  description: |
+    operation CRUD to fraudwall mongo
+  version: 0.0.1-SNAPSHOT
+  title: Fraudwall CRUD mongo fraudwall
+
+  
+
+schemes:
+- "https"
+  
+#basePath: /tracking
+#
+# 
+paths:
+  /partner:
+    post:
+      summary: "create a unique partner fraudwall"
+      description : "this call create a new partner"
+      operationId: "createPartner"
+      produces:
+      - "application/json"   
+     
+      # define the parameters    
+      parameters:
+        - in: body
+          name: partner
+          description: Partner struct
+          required: true
+          schema:
+            $ref: "#/definitions/Partner"
+      responses:
+        200:
+          description: OK
+
+
+        
+    delete:
+      summary: "delete a unique partner fraudwall"
+      description : "this call delete a new partner"
+      operationId: "deletePartner"
+      produces:
+      - "application/json"   
+     
+      # define the parameters    
+      parameters:
+        - in: query
+          name: partnerName
+          description: Name partner
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ResponseData'          
+        400:
+          description: "Bad request"            
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+    put:
+      summary: "update a unique partner fraudwall"
+      description : "this call update a new partner"
+      operationId: "updatePartner"
+      produces:
+      - "application/json"   
+      # define the parameters    
+      parameters:
+        - in: body
+          name: partner
+          description: Partner struct
+          required: true
+          schema:
+            $ref: "#/definitions/Partner"
+      responses:
+        200:
+          description: OK
+
+    get:
+      description: find all partner
+      operationId: findAll
+      #  define the parameters    
+      produces:
+      - application/json      
+
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Partner'            
+
+  /partner/getById/{partnerId}:
+    get:
+      description: find partner by id
+      operationId: findPartnerById
+      #  define the parameters    
+      produces:
+      - application/json      
+      parameters:
+        - in: path
+          name: partnerId
+          required: true
+          type: string
+          description: partnerName provided by Docomo Digital
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Partner"
+          
+  /partner/getByName/{partnerName}:
+    get:
+      description: find partner by id
+      operationId: findPartnerByName
+      #  define the parameters    
+      produces:
+      - application/json      
+      parameters:
+        - in: path
+          name: partnerName
+          required: true
+          type: string
+          description: partnerName provided by Docomo Digital
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Partner'            
+
+definitions:
+
+  Partner:
+    type: object
+    properties:
+      partnerId:
+        type: string       
+        description: Partner ID
+      partnerName:
+        type: string
+        description: Patner name
+      fraudwallModel:
+        type: string       
+        description: Model ID
+      events:
+        type: array
+        description: Model ID     
+        items:
+          $ref: '#/definitions/Event'           
+        
+        
+  Event:
+    type: object
+    properties:
+      eventName:
+        type: string       
+        description: Event name
+      EventId:
+        type: string
+        description: EventId in Docomo
+
+  
+          
+  ResponseData:
+    type: object
+    properties:
+      sessionId:
+        type: string
+      responseMessage:
+        type: string

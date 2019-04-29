@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: partner  
+  cloud:
+     config:
+      failFast: true
+      uri: ${CONFIG_SERVER_ENDPOINT}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE}
+
+---
+spring:
+  profiles: test    
+  cloud:
+     config:
+      failFast: false

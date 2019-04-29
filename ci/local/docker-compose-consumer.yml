@@ -1,0 +1,35 @@
+version: '2.1'
+
+services:
+
+  configserver:
+    image: "repo-04.dodi.io:5000/configserver:0.0.1-SNAPSHOT"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      GIT_URI: https://github.com/marceito2002/configServerPruebas.git
+      #GIT_USER: alfonso.herreros
+      #GIT_PASS: 
+      HOSTNAME: "configserver"
+    ports:
+      - "8888:8888"
+    
+    networks:
+     - docomo.fraudwall
+    restart: always
+
+
+  mongodb:
+    image: mongo:latest
+    command: --smallfiles
+    #environment:
+      #MONGO_INITDB_ROOT_USERNAME: alf
+      #MONGO_INITDB_ROOT_PASSWORD: alf  
+    ports:
+      - "27017:27017"
+    networks:
+      - docomo.fraudwall
+    restart: always
+
+networks:
+  docomo.fraudwall:
+    driver: bridge
