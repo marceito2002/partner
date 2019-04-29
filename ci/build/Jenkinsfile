@@ -73,18 +73,9 @@ pipeline {
         // ****************************** Modify the job names for different projects ********************
 
         myBuildGoal = scopeMap.get("buildGoal")
-
-        
-  
         myProfile = scopeMap.get("profile")
-    
-    
         myRev = scopeMap.get("rev")        
-
-        
         myVersion = scopeMap.get("version")
-
-        
 		shouldDeploy = scopeMap.get("deploy")
 
     }

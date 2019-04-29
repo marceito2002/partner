@@ -3,7 +3,8 @@ version: '2.1'
 services:
 
   configserver:
-    image: "repo-04.dodi.io:5000/configserver:0.0.1-SNAPSHOT"
+    #image: "repo-04.dodi.io:5000/configserver:0.0.1-SNAPSHOT"
+    image: "aherreros/microservicesdocomo:configserver-0.0.1-SNAPSHOT"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       GIT_URI: https://github.com/marceito2002/configServerPruebas.git

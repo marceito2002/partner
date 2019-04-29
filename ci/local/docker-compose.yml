@@ -2,7 +2,8 @@ version: '2.1'
 
 services:
   partner:
-    image: "repo-04.dodi.io:5000/partner:0.0.1-SNAPSHOT"
+    #image: "repo-04.dodi.io:5000/partner:0.0.1-SNAPSHOT"
+    image: "aherreros/microservicesdocomo/partner:0.0.1-SNAPSHOT"
     container_name: partner
     environment:
       SPRING_PROFILES_ACTIVE: docker
