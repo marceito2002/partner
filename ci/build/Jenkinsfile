@@ -182,7 +182,7 @@ pipeline {
 
            	sh "oc set env dc/partner CONFIG_SERVER_ENDPOINT=http://configserver:8080" 
 			sh "oc set env dc/partner SPRING_PROFILES_ACTIVE=openshift"
-			sh "oc expose svc/tracking" 
+			sh "oc expose svc/partner" 
                  
             }          
         }  
